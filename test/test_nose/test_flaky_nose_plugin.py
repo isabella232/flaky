@@ -20,6 +20,7 @@ class TestFlakyNosePlugin(TestCase):
         self._mock_test_result = MagicMock()
         self._mock_stream = None
         self._flaky_plugin = flaky_nose_plugin.FlakyPlugin()
+        self._flaky_plugin.suite = MagicMock()
         self._mock_nose_result = Mock(flaky_nose_plugin.TextTestResult)
         self._flaky_plugin.prepareTestResult(self._mock_nose_result)
         self._mock_test = MagicMock(name='flaky_plugin_test')
@@ -297,7 +298,6 @@ class TestFlakyNosePlugin(TestCase):
         expected_test_case_calls = [mock.call.address(), mock.call.address()]
         expected_result_calls = []
         if expected_plugin_handles_failure:
-            expected_test_case_calls.append(('__hash__',))
             expected_stream_calls = [mock.call.writelines([
                 self._mock_test_method_name,
                 ' failed ({0} runs remaining out of {1}).'.format(
@@ -405,7 +405,6 @@ class TestFlakyNosePlugin(TestCase):
         ])]
         if expected_plugin_handles_success:
             _rerun_text = 'Running test again until it passes {0} times.\n'
-            expected_test_case_calls.append(('__hash__',))
             expected_stream_calls.append(
                 mock.call.write(_rerun_text.format(min_passes)),
             )

@@ -28,7 +28,6 @@ class FlakyPlugin(_FlakyPlugin, Plugin):
         self._force_flaky = False
         self._max_runs = None
         self._min_passes = None
-        self._test_status = {}
         self._tests_that_reran = set()
 
     def options(self, parser, env=os.environ):
@@ -80,51 +79,23 @@ class FlakyPlugin(_FlakyPlugin, Plugin):
         self._max_runs = options.max_runs
         self._min_passes = options.min_passes
 
-    def startTest(self, test):
-        """
-        Base class override. Called before a test is run.
-
-        Add the test to the test status tracker, so it can potentially
-        be rerun during stopTest.
-
-        :param test:
-            The test that is going to be run.
-        :type test:
-            :class:`nose.case.Test`
-        """
-        # pylint:disable=invalid-name
-        self._test_status[test] = None
-
-    def stopTest(self, test):
-        """
-        Base class override. Called after a test is run.
-
-        If the test was marked for rerun, rerun the test.
-
-        :param test:
-            The test that has been run.
-        :type test:
-            :class:`nose.case.Test`
-        """
-        # pylint:disable=invalid-name
-        if self._test_status[test]:
-            self._tests_that_reran.add(id(test))
-            test.run(self._flaky_result)
-        self._test_status.pop(test, None)
+    def prepareTest(self, suite):
+        self.suite = suite
 
     def _mark_test_for_rerun(self, test):
         """
         Base class override. Rerun a flaky test.
 
-        In this case, don't actually rerun the test, but mark it for
-        rerun during stopTest.
+        In this case, don't actually rerun the test, but add it
+        back to the test suite to be rerun.
 
         :param test:
             The test that is going to be rerun.
         :type test:
             :class:`nose.case.Test`
         """
-        self._test_status[test] = True
+        self._tests_that_reran.add(id(test))
+        self.suite.addTest(test)
 
     def handleError(self, test, err):
         """
